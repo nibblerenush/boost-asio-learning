@@ -99,6 +99,7 @@ int main()
     sslContext.set_default_verify_paths();
     sslContext.set_verify_mode(ba::ssl::verify_peer);
     sslContext.set_verify_callback(VerifyCallback);
+    //sslContext.set_verify_callback(ba::ssl::rfc2818_verification(hostName));
     
     ba::ssl::stream<ba::ip::tcp::socket> sslStream(ioContext, sslContext);
     sslStream.lowest_layer().connect(resultsType->endpoint());
