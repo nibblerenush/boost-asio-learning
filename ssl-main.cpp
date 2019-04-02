@@ -1,4 +1,5 @@
 #include <cstdlib>
+#include <fstream>
 #include <iostream>
 #include <memory>
 #include <stdexcept>
@@ -75,17 +76,28 @@ bool VerifyCallback(bool preverified, ba::ssl::verify_context & verifyContext)
   return preverified;
 }
 
-int main()
+struct Host
 {
+  std::string name;
+  std::string port;
+  std::string resource;
+};
+
+int main(int argc, char ** argv)
+{
+  if (argc != 5)
+  {
+    std::cerr << "Usage: boost-asio-learning-ssl [host_name] [host_port] [host_resource] [verification_type]" << std::endl;
+    return EXIT_FAILURE;
+  }
+  
   try
   {
-    std::string hostName = "github.com";
-    std::string serviceName = "https";
-    std::string hostResource = "/";
+    struct Host host = {argv[1], argv[2], argv[3]};
     
     ba::io_context ioContext;
     ba::ip::tcp::resolver tcpResolver(ioContext);
-    ba::ip::tcp::resolver::results_type resultsType = tcpResolver.resolve(hostName, serviceName);
+    ba::ip::tcp::resolver::results_type resultsType = tcpResolver.resolve(host.name, host.port);
     
     for (auto iter = resultsType.begin(); iter != resultsType.end(); ++iter)
     {
@@ -98,32 +110,44 @@ int main()
     ba::ssl::context sslContext(ba::ssl::context::sslv23);
     sslContext.set_default_verify_paths();
     sslContext.set_verify_mode(ba::ssl::verify_peer);
-    sslContext.set_verify_callback(VerifyCallback);
-    //sslContext.set_verify_callback(ba::ssl::rfc2818_verification(hostName));
+    
+    int verificationType = std::atoi(argv[4]);
+    switch (verificationType)
+    {
+      case 0:
+        sslContext.set_verify_callback(VerifyCallback);
+        break;
+      case 1:
+        sslContext.set_verify_callback(ba::ssl::rfc2818_verification(host.name));
+        break;
+      default:
+        throw std::runtime_error("Error verification type!");
+    }
     
     ba::ssl::stream<ba::ip::tcp::socket> sslStream(ioContext, sslContext);
     sslStream.lowest_layer().connect(resultsType->endpoint());
     sslStream.handshake(boost::asio::ssl::stream_base::client);
     
     std::string request =
-      std::string("GET ") + hostResource + " HTTP/1.1\r\n" +
-      std::string("Host: ") + hostName + "\r\n" +
+      std::string("GET ") + host.resource + " HTTP/1.1\r\n" +
+      std::string("Host: ") + host.name + "\r\n" +
       std::string("Connection: close\r\n\r\n");
-    
     sslStream.write_some(ba::buffer(request, request.size()));
     
-    boost::system::error_code errorCode;
+    std::ofstream outputFile("output.html");
     do
     {
       std::vector<char> reply(1024);
+      boost::system::error_code errorCode;
       sslStream.read_some(ba::buffer(reply, reply.size()), errorCode);
+      
       if (!errorCode)
       {
-        //std::cout << reply.data() << std::endl;
+        outputFile << reply.data();
       }
       else
       {
-        std::cout << "Error: " << errorCode.message() << std::endl;
+        std::cerr << "Error: " << errorCode.message() << std::endl;
         break;
       }
     }
@@ -137,6 +161,5 @@ int main()
   {
     std::cerr << ex.what() << std::endl;
   }
-  
   return EXIT_SUCCESS;
 }
