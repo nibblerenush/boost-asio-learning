@@ -23,14 +23,20 @@ if(${Threads_FOUND})
   message("CMAKE_THREAD_LIBS_INIT: " ${CMAKE_THREAD_LIBS_INIT})
 endif()
 
-set(EXPORTED_TARGETS
+set(EXPORTED_TARGETS_BOOST_ASIO
   Boost::system
   Boost::regex
   Boost::date_time
-  OpenSSL::Crypto
-  OpenSSL::SSL
   Threads::Threads)
+
+set(EXPORTED_TARGETS_OPEN_SSL
+  OpenSSL::Crypto
+  OpenSSL::SSL)
 
 add_executable(${PROJECT_NAME}-ssl ssl-main.cpp)
 set_property(TARGET ${PROJECT_NAME}-ssl PROPERTY CXX_STANDARD 14)
-target_link_libraries(${PROJECT_NAME}-ssl PRIVATE ${EXPORTED_TARGETS})
+target_link_libraries(${PROJECT_NAME}-ssl PRIVATE ${EXPORTED_TARGETS_BOOST_ASIO} ${EXPORTED_TARGETS_OPEN_SSL})
+
+add_executable(${PROJECT_NAME}-stackless stackless-main.cpp)
+set_property(TARGET ${PROJECT_NAME}-stackless PROPERTY CXX_STANDARD 14)
+target_link_libraries(${PROJECT_NAME}-stackless PRIVATE ${EXPORTED_TARGETS_BOOST_ASIO})
