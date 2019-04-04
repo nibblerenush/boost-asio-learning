@@ -68,6 +68,8 @@ void EchoServer::operator()(const bs::error_code & errorCode, std::size_t length
   }
 }
 
+#include <boost/asio/unyield.hpp>
+
 int main(int argc, char ** argv)
 {
   if (argc != 2)
@@ -109,7 +111,6 @@ int main(int argc, char ** argv)
     std::cerr << "std::exception: " << ex.what() << std::endl;
   }
   
-  #include <boost/asio/unyield.hpp>
   std::cout << "EXIT_SUCCESS" << std::endl;
   return EXIT_SUCCESS;
 }
