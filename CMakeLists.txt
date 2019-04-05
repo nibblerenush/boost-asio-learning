@@ -4,7 +4,7 @@ project(boost-asio-learning)
 set(Boost_USE_STATIC_LIBS ON)
 set(Boost_USE_MULTITHREADED ON)
 
-find_package(Boost REQUIRED COMPONENTS system regex date_time)
+find_package(Boost REQUIRED COMPONENTS system regex date_time coroutine thread)
 if(${Boost_FOUND})
   message("BOOST VERSION: " ${Boost_VERSION})
   message("BOOST INCLUDE DIR: " ${Boost_INCLUDE_DIRS})
@@ -29,14 +29,22 @@ set(EXPORTED_TARGETS_BOOST_ASIO
   Boost::date_time
   Threads::Threads)
 
-set(EXPORTED_TARGETS_OPEN_SSL
-  OpenSSL::Crypto
-  OpenSSL::SSL)
-
 add_executable(${PROJECT_NAME}-ssl ssl-main.cpp)
 set_property(TARGET ${PROJECT_NAME}-ssl PROPERTY CXX_STANDARD 14)
-target_link_libraries(${PROJECT_NAME}-ssl PRIVATE ${EXPORTED_TARGETS_BOOST_ASIO} ${EXPORTED_TARGETS_OPEN_SSL})
+target_link_libraries(${PROJECT_NAME}-ssl
+  PRIVATE
+  ${EXPORTED_TARGETS_BOOST_ASIO}
+  OpenSSL::Crypto
+  OpenSSL::SSL)
 
 add_executable(${PROJECT_NAME}-stackless stackless-main.cpp)
 set_property(TARGET ${PROJECT_NAME}-stackless PROPERTY CXX_STANDARD 14)
 target_link_libraries(${PROJECT_NAME}-stackless PRIVATE ${EXPORTED_TARGETS_BOOST_ASIO})
+
+add_executable(${PROJECT_NAME}-stackful stackful-main.cpp)
+set_property(TARGET ${PROJECT_NAME}-stackful PROPERTY CXX_STANDARD 14)
+target_link_libraries(${PROJECT_NAME}-stackful
+  PRIVATE
+  ${EXPORTED_TARGETS_BOOST_ASIO}
+  Boost::coroutine
+  Boost::thread)
